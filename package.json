@@ -4,6 +4,7 @@
   "description": "Image hosting for Nostr",
   "main": "index.js",
   "scripts": {
+    "dev": "export NODE_ENV=development; nodemon server/index.js",
     "start": "node server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,6 +20,14 @@
   },
   "homepage": "https://github.com/michaelhall923/nostrimg#readme",
   "dependencies": {
-    "express": "^4.18.2"
+    "aws-sdk": "^2.1281.0",
+    "crypto": "^1.0.1",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.20"
   }
 }
