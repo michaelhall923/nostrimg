@@ -52,21 +52,21 @@ const upload = multer({
 
 const uploadSingleImage = upload.single("image");
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET_KEY,
-    cookie: {
-      expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 365 days
-    },
-    resave: false,
-    saveUninitialized: true,
-    store: new PostgreSQLStore({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      ssl: true,
-    }),
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET_KEY,
+//     cookie: {
+//       expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 365 days
+//     },
+//     resave: false,
+//     saveUninitialized: true,
+//     store: new PostgreSQLStore({
+//       conString: process.env.DATABASE_URL,
+//       createTableIfMissing: true,
+//       ssl: true,
+//     }),
+//   })
+// );
 
 app.use(
   cors({
