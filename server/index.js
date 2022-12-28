@@ -36,6 +36,7 @@ const pgPool = new pg.Pool({
 const PORT = process.env.PORT || 3001;
 
 const app = express();
+const router = express.Router();
 
 const btcpayserverurl = "https://bps.nostrimg.com";
 const btcPayServertoken = process.env.BTC_PAY_SERVER_TOKEN;
@@ -72,7 +73,7 @@ const upload = multer({
 
 const uploadSingleImage = upload.single("image");
 
-app.use(
+router.use(
   session({
     secret: process.env.SESSION_SECRET_KEY,
     cookie: {
@@ -92,7 +93,7 @@ app.use(
   })
 );
 
-app.use(
+router.use(
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
@@ -115,7 +116,7 @@ app.use(
   })
 );
 
-app.get("/auth/init", async (req, res) => {
+router.get("/auth/init", async (req, res) => {
   var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices`;
 
   var body = {
@@ -181,7 +182,7 @@ app.get("/auth/init", async (req, res) => {
     });
 });
 
-app.get("/auth/verify", async (req, res) => {
+router.get("/auth/verify", async (req, res) => {
   if (req.session.isAuthenticated) {
   } else {
     req.session.isAuthenticated = false;
@@ -212,7 +213,7 @@ app.get("/auth/verify", async (req, res) => {
   });
 });
 
-app.post(
+router.post(
   "/upload",
   cors({
     origin: (origin, callback) => {
@@ -319,13 +320,19 @@ app.post(
   }
 );
 
-// app.listen(8000, () => {
+// router.listen(8000, () => {
 //   console.log("Server listening on port 8000");
 // });
 
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
+
+if (process.env.NODE_ENV == "development") {
+  app.use("/api", router);
+} else {
+  app.use("/", router);
+}
 
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
