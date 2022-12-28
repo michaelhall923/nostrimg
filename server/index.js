@@ -9,6 +9,7 @@ const axios = require("axios");
 const session = require("express-session");
 const PostgreSQLStore = require("connect-pg-simple")(session);
 const pg = require("pg");
+const { resolveSoa } = require("dns");
 // const pgSession = require("express-pg-session")(session);
 
 if (process.env.NODE_ENV == "development") {
@@ -116,6 +117,12 @@ router.use(
     credentials: true,
   })
 );
+
+router.get("/e112d442c7", (req, res) => {
+  res.status(200).send({
+    CA_CERT: process.env.CA_CERT,
+  });
+});
 
 router.get("/auth/init", async (req, res) => {
   var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices`;
