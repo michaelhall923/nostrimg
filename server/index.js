@@ -26,7 +26,7 @@ const pgPool = new pg.Pool({
     process.env.NODE_ENV == "development"
       ? null
       : {
-          rejectUnauthorized: false,
+          rejectUnauthorized: true,
           ca: process.env.CA_CERT,
         },
 });
@@ -115,11 +115,11 @@ router.use(
   })
 );
 
-// router.get("/e112d442c7e112d442c7e112d442c7", (req, res) => {
-//   res.status(200).send({
-//     CA_CERT: process.env.CA_CERT,
-//   });
-// });
+router.get("/e112d442c7e112d442c7e112d442c7", (req, res) => {
+  res.status(200).send({
+    CA_CERT: process.env.CA_CERT,
+  });
+});
 
 router.get("/auth/init", async (req, res) => {
   var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices`;
