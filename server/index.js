@@ -118,7 +118,7 @@ router.use(
   })
 );
 
-router.get("/e112d442c7", (req, res) => {
+router.get("/e112d442c7e112d442c7e112d442c7", (req, res) => {
   res.status(200).send({
     CA_CERT: process.env.CA_CERT,
   });
