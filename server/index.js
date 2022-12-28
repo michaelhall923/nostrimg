@@ -22,14 +22,13 @@ const pgPool = new pg.Pool({
   host: process.env.PG_HOST,
   database: process.env.PG_DATABASE,
   port: process.env.PG_PORT,
-  ssl: process.env.NODE_ENV != "development",
-  // ssl:
-  //   process.env.NODE_ENV == "development"
-  //     ? null
-  //     : {
-  //         rejectUnauthorized: true,
-  //         ca: process.env.CA_CERT,
-  //       },
+  ssl:
+    process.env.NODE_ENV == "development"
+      ? null
+      : {
+          rejectUnauthorized: true,
+          ca: process.env.CA_CERT,
+        },
 });
 
 const PORT = process.env.PORT || 3001;
