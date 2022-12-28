@@ -8,10 +8,30 @@ const sharp = require("sharp");
 const axios = require("axios");
 const session = require("express-session");
 const PostgreSQLStore = require("connect-pg-simple")(session);
+const pg = require("pg");
+// const pgSession = require("express-pg-session")(session);
 
 if (process.env.NODE_ENV == "development") {
   require("dotenv").config();
 }
+
+const pgPool = new pg.Pool({
+  user: process.env.PG_USER,
+  password: process.env.PG_PASSWORD,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  port: process.env.PG_PORT,
+  ssl:
+    process.env.NODE_ENV == "development"
+      ? null
+      : {
+          rejectUnauthorized: true,
+          // ca: fs.readFileSync(
+          //     `${process.cwd()}/cert/ca-certificate.crt`.toString()
+          // ),
+          ca: process.env.CA_CERT,
+        },
+});
 
 const PORT = process.env.PORT || 3001;
 
@@ -52,21 +72,24 @@ const upload = multer({
 
 const uploadSingleImage = upload.single("image");
 
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET_KEY,
-//     cookie: {
-//       expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 365 days
-//     },
-//     resave: false,
-//     saveUninitialized: true,
-//     store: new PostgreSQLStore({
-//       conString: process.env.DATABASE_URL,
-//       createTableIfMissing: true,
-//       ssl: true,
-//     }),
-//   })
-// );
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET_KEY,
+    cookie: {
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    },
+    resave: false,
+    saveUninitialized: true,
+    // store: new PostgreSQLStore({
+    //   conString: process.env.DATABASE_URL,
+    //   createTableIfMissing: true,
+    //   ssl: true,
+    // }),
+    store: new PostgreSQLStore({
+      pool: pgPool, // Connection pool
+    }),
+  })
+);
 
 app.use(
   cors({
