@@ -111,7 +111,7 @@ router.use(
       }
     },
     methods: ["POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Pragma"],
     credentials: true,
   })
 );
@@ -232,7 +232,7 @@ router.post(
       }
     },
     methods: ["POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Pragma"],
     credentials: true,
   }),
   async (req, res) => {
