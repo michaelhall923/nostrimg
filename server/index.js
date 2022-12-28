@@ -70,7 +70,11 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = ["http://localhost:3000", "https://nostrimg.com"];
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "https://nostrimg.com",
+        "https://www.nostrimg.com",
+      ];
       if (
         allowedOrigins.includes(origin) ||
         process.env.NODE_ENV == "development"
@@ -187,7 +191,11 @@ app.post(
   "/api/upload",
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = ["http://localhost:3000", "https://nostrimg.com"];
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "https://nostrimg.com",
+        "https://www.nostrimg.com",
+      ];
       if (
         allowedOrigins.includes(origin) ||
         process.env.NODE_ENV == "development"
