@@ -103,6 +103,7 @@ router.use(
       ];
       if (
         allowedOrigins.includes(origin) ||
+        origin === undefined ||
         process.env.NODE_ENV == "development"
       ) {
         callback(null, true);
@@ -224,6 +225,7 @@ router.post(
       ];
       if (
         allowedOrigins.includes(origin) ||
+        origin === undefined ||
         process.env.NODE_ENV == "development"
       ) {
         callback(null, true);
