@@ -115,7 +115,7 @@ app.use(
   })
 );
 
-app.get("/api/auth/init", async (req, res) => {
+app.get("/auth/init", async (req, res) => {
   var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices`;
 
   var body = {
@@ -181,7 +181,7 @@ app.get("/api/auth/init", async (req, res) => {
     });
 });
 
-app.get("/api/auth/verify", async (req, res) => {
+app.get("/auth/verify", async (req, res) => {
   if (req.session.isAuthenticated) {
   } else {
     req.session.isAuthenticated = false;
@@ -213,7 +213,7 @@ app.get("/api/auth/verify", async (req, res) => {
 });
 
 app.post(
-  "/api/upload",
+  "/upload",
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
@@ -323,7 +323,7 @@ app.post(
 //   console.log("Server listening on port 8000");
 // });
 
-app.get("/api", (req, res) => {
+app.get("/", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
 
