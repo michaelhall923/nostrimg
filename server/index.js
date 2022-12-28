@@ -63,6 +63,7 @@ app.use(
     store: new PostgreSQLStore({
       conString: process.env.DATABASE_URL,
       createTableIfMissing: true,
+      ssl: true,
     }),
   })
 );
