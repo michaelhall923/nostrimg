@@ -122,69 +122,91 @@ router.get("/e112d442c7e112d442c7e112d442c7", (req, res) => {
 });
 
 router.get("/auth/init", async (req, res) => {
-  var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices`;
+  var generateNewInvoice = false;
+  if (req.session.authInvoiceId) {
+    if (Date.now() / 1000 >= req.session.authInvoiceExpirationTime) {
+      generateNewInvoice = true;
+    }
+  } else {
+    generateNewInvoice = true;
+  }
 
-  var body = {
-    metadata: {
-      buyerAddress1: "string",
-    },
-    checkout: {
-      speedPolicy: "HighSpeed",
-      paymentMethods: ["BTC-LightningNetwork"],
-      defaultPaymentMethod: "BTC-LightningNetwork",
-      expirationMinutes: 90,
-      monitoringMinutes: 90,
-      paymentTolerance: 0,
-      redirectURL: "string",
-      redirectAutomatically: true,
-      requiresRefundEmail: false,
-      checkoutType: null,
-      // defaultLanguage: "string",
-    },
-    receipt: {
-      enabled: true,
-      showQR: null,
-      showPayments: null,
-    },
-    amount: "100",
-    currency: "SATS",
-    additionalSearchTerms: ["string"],
-  };
+  if (generateNewInvoice) {
+    var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices`;
 
-  await axios
-    .post(btcpayserverurl + apiendpoint, body, btcPayServerConfig)
-    .then(async (response) => {
-      req.session.authInvoiceId = response.data.id;
-      // console.log(response.data);
-      apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices/${response.data.id}/payment-methods`;
+    var body = {
+      metadata: {
+        buyerAddress1: "string",
+      },
+      checkout: {
+        speedPolicy: "HighSpeed",
+        paymentMethods: ["BTC-LightningNetwork"],
+        defaultPaymentMethod: "BTC-LightningNetwork",
+        expirationMinutes: 90,
+        monitoringMinutes: 90,
+        paymentTolerance: 0,
+        redirectURL: "string",
+        redirectAutomatically: true,
+        requiresRefundEmail: false,
+        checkoutType: null,
+        // defaultLanguage: "string",
+      },
+      receipt: {
+        enabled: true,
+        showQR: null,
+        showPayments: null,
+      },
+      amount: "100",
+      currency: "SATS",
+      additionalSearchTerms: ["string"],
+    };
 
-      await axios
-        .get(btcpayserverurl + apiendpoint, btcPayServerConfig)
-        .then((response) => {
-          var invoice = response.data[0];
-          // Return the fileName to the client
+    await axios
+      .post(btcpayserverurl + apiendpoint, body, btcPayServerConfig)
+      .then(async (response) => {
+        req.session.authInvoiceId = response.data.id;
+        req.session.authInvoiceExpirationTime = response.data.expirationTime;
+        apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices/${response.data.id}/payment-methods`;
 
-          var url = "https://nostrimg.com/";
-          var imageUrl = "https://i.nostrimg.com/";
-          if (process.env.NODE_ENV == "development") {
-            url = "http://nostrimg.com/";
-          }
+        await axios
+          .get(btcpayserverurl + apiendpoint, btcPayServerConfig)
+          .then((response) => {
+            var invoice = response.data[0];
 
-          return res.status(200).send({
-            lightningDestination: invoice.destination,
-            lightningPaymentLink: invoice.paymentLink,
-            authInvoiceId: req.session.authInvoiceId,
+            return res.status(200).send({
+              lightningDestination: invoice.destination,
+              lightningPaymentLink: invoice.paymentLink,
+              authInvoiceId: req.session.authInvoiceId,
+            });
+          })
+          .catch((error) => {
+            console.error(error);
+            return res.status(500).send();
           });
-        })
-        .catch((error) => {
-          console.error(error);
-          return res.status(500).send();
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send();
+      });
+  } else {
+    var apiendpoint = `/api/v1/stores/${process.env.BTC_PAY_SERVER_STORE_ID}/invoices/${req.session.authInvoiceId}/payment-methods`;
+
+    await axios
+      .get(btcpayserverurl + apiendpoint, btcPayServerConfig)
+      .then((response) => {
+        var invoice = response.data[0];
+
+        return res.status(200).send({
+          lightningDestination: invoice.destination,
+          lightningPaymentLink: invoice.paymentLink,
+          authInvoiceId: req.session.authInvoiceId,
         });
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send();
-    });
+      })
+      .catch((error) => {
+        console.error(error);
+        return res.status(500).send();
+      });
+  }
 });
 
 router.get("/auth/verify", async (req, res) => {
