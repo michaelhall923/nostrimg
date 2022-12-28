@@ -87,6 +87,7 @@ app.use(
     // }),
     store: new PostgreSQLStore({
       pool: pgPool, // Connection pool
+      createTableIfMissing: true,
     }),
   })
 );
