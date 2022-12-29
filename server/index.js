@@ -285,14 +285,17 @@ router.post(
         req.file.mimetype == "image/jpg"
       ) {
         req.file.buffer = await sharp(req.file.buffer)
+          .rotate()
           .jpeg({ quality: 70 })
           .toBuffer();
       } else if (req.file.mimetype == "image/png") {
         req.file.buffer = await sharp(req.file.buffer)
+          .rotate()
           .png({ quality: 90 })
           .toBuffer();
       } else if (req.file.mimetype == "image/webp") {
         req.file.buffer = await sharp(req.file.buffer)
+          .rotate()
           .webp({ quality: 80 })
           .toBuffer();
       } else if (req.file.mimetype == "image/gif") {
