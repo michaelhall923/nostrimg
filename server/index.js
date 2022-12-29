@@ -45,7 +45,7 @@ const btcPayServerConfig = {
   },
 };
 
-const MAX_FILE_SIZE = 5;
+const MAX_FILE_SIZE = 10;
 
 /// Set up multer to handle file uploads
 const storage = multer.memoryStorage();
@@ -294,11 +294,15 @@ router.post(
           .png({ quality: 90 })
           .toBuffer();
       } else if (req.file.mimetype == "image/webp") {
-        req.file.buffer = await sharp(req.file.buffer)
+        req.file.buffer = await sharp(req.file.buffer, { animated: true })
           .rotate()
           .webp({ quality: 80 })
           .toBuffer();
       } else if (req.file.mimetype == "image/gif") {
+        req.file.buffer = await sharp(req.file.buffer, { animated: true })
+          .rotate()
+          .gif({ quality: 80 })
+          .toBuffer();
       }
 
       try {
