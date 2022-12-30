@@ -53,7 +53,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 1024 * 1024 * MAX_FILE_SIZE, // Limit file size to 5 MB
+    fileSize: 1024 * 1024 * MAX_FILE_SIZE, // Limit file size to 10 MB
   },
   fileFilter: (req, file, cb) => {
     // Allow image files and GIFs
@@ -252,7 +252,8 @@ router.post(
       if (
         allowedOrigins.includes(origin) ||
         origin === undefined ||
-        process.env.NODE_ENV == "development"
+        process.env.NODE_ENV == "development" ||
+        true
       ) {
         callback(null, true);
       } else {
@@ -263,8 +264,30 @@ router.post(
     allowedHeaders: ["Content-Type", "Authorization", "Pragma"],
     credentials: true,
   }),
+  // cors(),
   async (req, res) => {
-    if (!req.session.isAuthenticated) {
+    let isAuthenticated = req.session.isAuthenticated;
+
+    if (req.headers["authorization"]) {
+      // Get the username and password from the request header
+      const authHeader = req.headers["authorization"];
+      const [username, password] = Buffer.from(
+        authHeader.split(" ")[1],
+        "base64"
+      )
+        .toString()
+        .split(":");
+
+      // Validate the username and password
+      if (
+        username === process.env.API_USERNAME &&
+        password === process.env.API_PASSWORD
+      ) {
+        isAuthenticated = true;
+      }
+    }
+
+    if (!isAuthenticated) {
       return res.status(401).send({
         session: req.session,
       });
