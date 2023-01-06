@@ -269,22 +269,34 @@ router.post(
     let isAuthenticated = req.session.isAuthenticated;
 
     if (req.headers["authorization"]) {
-      // Get the username and password from the request header
-      const authHeader = req.headers["authorization"];
-      const [username, password] = Buffer.from(
-        authHeader.split(" ")[1],
-        "base64"
-      )
-        .toString()
-        .split(":");
+      const authorization = req.headers["authorization"];
+      if (authorization.startsWith("Client-ID ")) {
+        const clientID = authorization.split(" ")[1];
+        const clientIDs = [
+          "401e1e2049ba44114a5f59e60315eb0fb0fd12beee1f08deb8bde773995b896e", // Damus
+        ];
 
-      // Validate the username and password
-      if (
-        username === process.env.API_USERNAME &&
-        password === process.env.API_PASSWORD
-      ) {
-        isAuthenticated = true;
+        if (clientIDs.includes(clientID)) {
+          isAuthenticated = true;
+        }
       }
+
+      // // Get the username and password from the request header
+      // const authHeader = req.headers["authorization"];
+      // const [username, password] = Buffer.from(
+      //   authHeader.split(" ")[1],
+      //   "base64"
+      // )
+      //   .toString()
+      //   .split(":");
+
+      // // Validate the username and password
+      // if (
+      //   username === process.env.API_USERNAME &&
+      //   password === process.env.API_PASSWORD
+      // ) {
+      //   isAuthenticated = true;
+      // }
     }
 
     if (!isAuthenticated) {
