@@ -4,8 +4,8 @@
   "description": "Image hosting for Nostr",
   "main": "index.js",
   "scripts": {
-    "dev": "export NODE_ENV=development; nodemon server/index.js",
-    "start": "node server/index.js",
+    "dev": "export NODE_ENV=development; nodemon index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
