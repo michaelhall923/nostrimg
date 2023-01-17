@@ -173,7 +173,7 @@ router.post("/upload/gifify", async (req, res) => {
       .duration(req.body.length)
       .outputOptions([
         "-filter_complex",
-        `fps=15,scale=480:-1:flags=lanczos,crop=in_w*${crop.width}:in_h*${crop.height}:in_w*${crop.x}:in_h*${crop.y},split[s0][s1];[s0]palettegen=max_colors=32[p];[s1][p]paletteuse=dither=bayer`,
+        `fps=15,scale=480:-1:flags=lanczos,crop=in_w*${crop.width}:in_h*${crop.height}:in_w*${crop.x}:in_h*${crop.y},split[s0][s1];[s0]palettegen=max_colors=64[p];[s1][p]paletteuse=dither=bayer`,
       ])
       .on("end", async function () {
         // console.log("conversion finished!");
