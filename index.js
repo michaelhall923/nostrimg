@@ -71,6 +71,25 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return next();
+  }
+
+  const auth = Buffer.from(authHeader.split(" ")[1], "base64")
+    .toString()
+    .split(":");
+  const username = auth[0];
+  const password = auth[1];
+
+  // check if the user is valid
+  if (username === process.env.USERNAME && password === process.env.PASSWORD) {
+    req.session.isAuthenticated = true;
+  }
+  next();
+});
+
 const PORT = process.env.PORT || 3001;
 const PATH = process.env.NODE_ENV == "development" ? "/api" : "/";
 
