@@ -10,7 +10,7 @@ const { randomFileID } = require("../utils/file");
 
 const router = express.Router();
 
-const MAX_FILE_SIZE = 10; // Max file size in MB
+const MAX_FILE_SIZE = process.env.MAX_FILE_SIZE_MB; // Max file size in MB
 
 /// Set up multer to handle file uploads using memory storage
 const storage = multer.memoryStorage();
