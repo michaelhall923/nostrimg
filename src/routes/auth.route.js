@@ -50,7 +50,7 @@ router.get("/auth/init", async (req, res) => {
         showQR: null,
         showPayments: null,
       },
-      amount: "100",
+      amount: "123",
       currency: "SATS",
       additionalSearchTerms: ["string"],
     };
