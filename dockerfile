@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ffmpeg
-RUN apt update && apt upgrade
-RUN apt install ffmpeg
+RUN apt -y update && apt -y upgrade
+RUN apt -y install ffmpeg
 
 # Install the app's dependencies
 RUN npm install
