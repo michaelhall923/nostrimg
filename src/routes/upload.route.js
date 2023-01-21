@@ -23,7 +23,7 @@ const s3 = new AWS.S3({
 
 // Upload filters, etc.
 const upload = multer({
-  storage,
+  dest: "./tmp/uploads",
   limits: {
     fileSize: 1024 * 1024 * MAX_FILE_SIZE,
   },
@@ -62,26 +62,45 @@ router.post("/upload", async (req, res) => {
 
     // Compress the image using Sharp
     if (req.file.mimetype == "image/jpeg" || req.file.mimetype == "image/jpg") {
-      req.file.buffer = await sharp(req.file.buffer)
+      req.file.buffer = await sharp(req.file.path)
         .rotate()
-        .jpeg({ quality: 70 })
+        .jpeg({ mozjpeg: true })
         .toBuffer();
     } else if (req.file.mimetype == "image/png") {
-      req.file.buffer = await sharp(req.file.buffer)
+      req.file.buffer = await sharp(req.file.path)
         .rotate()
-        .png({ quality: 90 })
+        .png({ quality: 10 })
         .toBuffer();
     } else if (req.file.mimetype == "image/webp") {
-      req.file.buffer = await sharp(req.file.buffer, { animated: true })
+      req.file.buffer = await sharp(req.file.path, { animated: true })
         .rotate()
         .webp({ quality: 80 })
         .toBuffer();
     } else if (req.file.mimetype == "image/gif") {
-      req.file.buffer = await sharp(req.file.buffer, { animated: true })
+      const metadata = await sharp(req.file.path).metadata();
+
+      // ffmpeg(req.file.path)
+      //   .fps(1000 / metadata.delay[0] / 2)
+      //   .outputOptions([
+      //     "-loop",
+      //     "0",
+      //     "-filter_complex",
+      //     `select='not(mod(n,2))',scale=120:-1,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer`,
+      //   ])
+      //   .save(`${req.file.path}.gif`)
+      //   .on("error", function (err, stdout, stderr) {
+      //     console.error(err);
+      //     return res.status(500).send({ message: err.message });
+      //   })
+      //   .run();
+
+      req.file.buffer = await sharp(`${req.file.path}`, { animated: true })
         .rotate()
-        .gif({ quality: 80 })
+        .gif()
         .toBuffer();
     }
+
+    fs.unlinkSync(req.file.path);
 
     // Send to S3
     try {
