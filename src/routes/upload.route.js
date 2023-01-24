@@ -24,7 +24,7 @@ const s3 = new AWS.S3({
 
 // Upload filters, etc.
 const upload = multer({
-  dest: "./tmp/uploads",
+  storage,
   limits: {
     fileSize: 1024 * 1024 * MAX_FILE_SIZE,
   },
@@ -63,28 +63,26 @@ router.post("/upload", async (req, res) => {
 
     // Compress the image using Sharp
     if (req.file.mimetype == "image/jpeg" || req.file.mimetype == "image/jpg") {
-      req.file.buffer = await sharp(req.file.path)
+      req.file.buffer = await sharp(req.file.buffer)
         .rotate()
         .jpeg({ mozjpeg: true })
         .toBuffer();
     } else if (req.file.mimetype == "image/png") {
-      req.file.buffer = await sharp(req.file.path)
+      req.file.buffer = await sharp(req.file.buffer)
         .rotate()
         .png({ quality: 10 })
         .toBuffer();
     } else if (req.file.mimetype == "image/webp") {
-      req.file.buffer = await sharp(req.file.path, { animated: true })
+      req.file.buffer = await sharp(req.file.buffer, { animated: true })
         .rotate()
         .webp({ quality: 80 })
         .toBuffer();
     } else if (req.file.mimetype == "image/gif") {
-      req.file.buffer = await sharp(req.file.path, { animated: true })
+      req.file.buffer = await sharp(req.file.buffer, { animated: true })
         .rotate()
         .gif({ quality: 80 })
         .toBuffer();
     }
-
-    fs.unlinkSync(req.file.path);
 
     // Send to S3
     try {
