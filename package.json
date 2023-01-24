@@ -21,7 +21,7 @@
   "homepage": "https://github.com/michaelhall923/nostrimg#readme",
   "dependencies": {
     "aws-sdk": "^2.1281.0",
-    "axios": "^1.2.1",
+    "axios": "^1.2.3",
     "connect-pg-simple": "^8.0.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",

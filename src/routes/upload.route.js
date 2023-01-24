@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const crypto = require("crypto");
 const path = require("path");
+const axios = require("axios");
 const AWS = require("aws-sdk");
 const sharp = require("sharp");
 const ffmpeg = require("fluent-ffmpeg");
@@ -77,27 +78,10 @@ router.post("/upload", async (req, res) => {
         .webp({ quality: 80 })
         .toBuffer();
     } else if (req.file.mimetype == "image/gif") {
-      const metadata = await sharp(req.file.path).metadata();
-
-      // ffmpeg(req.file.path)
-      //   .fps(1000 / metadata.delay[0] / 2)
-      //   .outputOptions([
-      //     "-loop",
-      //     "0",
-      //     "-filter_complex",
-      //     `select='not(mod(n,2))',scale=120:-1,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer`,
-      //   ])
-      //   .save(`${req.file.path}.gif`)
-      //   .on("error", function (err, stdout, stderr) {
-      //     console.error(err);
-      //     return res.status(500).send({ message: err.message });
-      //   })
-      //   .run();
-
-      req.file.buffer = await sharp(`${req.file.path}`, { animated: true })
-        .rotate()
-        .gif()
-        .toBuffer();
+      // req.file.buffer = await sharp(req.file.buffer, { animated: true })
+      //   .rotate()
+      //   .gif({ quality: 80 })
+      //   .toBuffer();
     }
 
     fs.unlinkSync(req.file.path);
@@ -137,6 +121,83 @@ router.post("/upload", async (req, res) => {
       console.error(err);
       return res.status(500).send({ message: err.message });
     }
+  });
+});
+
+router.get("/upload/tinify", async (req, res) => {
+  const fileName = crypto.randomBytes(16).toString("base64").replace(/\//, "_");
+  const response = await axios.get(req.query.imageUrl, {
+    responseType: "stream",
+  });
+  const stream = response.data.pipe(
+    fs.createWriteStream(`./tmp/uploads/${fileName}`)
+  );
+
+  stream.on("finish", async () => {
+    const file = await sharp(process.cwd() + `/tmp/uploads/${fileName}`, {
+      animated: true,
+    });
+    const metadata = await file.metadata();
+
+    const smallerDim = 128;
+    const scale =
+      metadata.width > metadata.pageHeight
+        ? `-2:${smallerDim}`
+        : `${smallerDim}:-2`;
+
+    ffmpeg(`./tmp/uploads/${fileName}`)
+      .outputOption(
+        "-vf",
+        `minterpolate='fps=20',scale=${scale}:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=64:reserve_transparent=0[p];[s1][p]paletteuse`
+      )
+      .output(`./tmp/uploads/${fileName}.gif`)
+      .on("end", async function () {
+        fs.unlinkSync(`./tmp/uploads/${fileName}`); // delete the temporary file
+
+        const gifPath = `./tmp/uploads/${fileName}.gif`;
+
+        // Send to S3
+        try {
+          // Generate a random 8 character 64-bit string for the filename
+          const fileID = randomFileID();
+          const fileName = fileID + path.extname(gifPath);
+
+          // Upload the file to the S3 bucket
+          const s3Response = await s3
+            .putObject({
+              Bucket: process.env.AWS_S3_BUCKET,
+              Key: fileName,
+              Body: fs.readFileSync(gifPath),
+              ContentType: "image/gif",
+            })
+            .promise();
+
+          fs.unlinkSync(gifPath); // delete the temporary file
+
+          // Return the file data to the client
+          var url = "https://nostrimg.com/";
+          var imageUrl = "https://i.nostrimg.com/";
+
+          return res.send({
+            route: `/i/${fileName}`,
+            url: `${url}i/${fileName}`,
+            imageUrl: `${imageUrl}${fileName}`,
+            fileName: fileName,
+            fileID: fileID,
+            message: "Image uploaded successfully.",
+            lightningDestination: process.env.BTC_PAY_SERVER_LNURL,
+            lightningPaymentLink: `lightning:${process.env.BTC_PAY_SERVER_LNURL}`,
+          });
+        } catch (err) {
+          console.error(err);
+          return res.status(500).send({ message: err.message });
+        }
+      })
+      .on("error", function (err, stdout, stderr) {
+        console.error(err);
+        return res.status(500).send({ message: err.message });
+      })
+      .run();
   });
 });
 
