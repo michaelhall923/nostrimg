@@ -78,10 +78,10 @@ router.post("/upload", async (req, res) => {
         .webp({ quality: 80 })
         .toBuffer();
     } else if (req.file.mimetype == "image/gif") {
-      // req.file.buffer = await sharp(req.file.buffer, { animated: true })
-      //   .rotate()
-      //   .gif({ quality: 80 })
-      //   .toBuffer();
+      req.file.buffer = await sharp(req.file.path, { animated: true })
+        .rotate()
+        .gif({ quality: 80 })
+        .toBuffer();
     }
 
     fs.unlinkSync(req.file.path);
