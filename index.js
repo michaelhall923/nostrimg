@@ -46,6 +46,14 @@ app.use(
   })
 );
 
+// Set default session variables
+app.use((req, res, next) => {
+  if (req.session.totalUploads === undefined) {
+    req.session.totalUploads = 0;
+  }
+  next();
+});
+
 // Set default CORS policy
 app.use(
   cors({

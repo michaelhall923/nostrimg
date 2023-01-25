@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const { isAuthenticated } = require("../utils/auth");
 
 const router = express.Router();
 
@@ -110,7 +111,7 @@ router.get("/auth/init", async (req, res) => {
 
 // Verify that client is authenticated
 router.get("/auth/verify", async (req, res) => {
-  if (req.session.isAuthenticated) {
+  if (isAuthenticated(req)) {
   } else {
     req.session.isAuthenticated = false;
     if (req.session.authInvoiceId) {
@@ -136,7 +137,7 @@ router.get("/auth/verify", async (req, res) => {
   }
   // Send auth status to client
   res.status(200).send({
-    isAuthenticated: req.session.isAuthenticated,
+    isAuthenticated: isAuthenticated(req),
     authInvoiceId: req.session.authInvoiceId,
   });
 });

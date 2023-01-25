@@ -8,6 +8,7 @@ const sharp = require("sharp");
 const ffmpeg = require("fluent-ffmpeg");
 const fs = require("fs");
 const { randomFileID } = require("../utils/file");
+const { isAuthenticated } = require("../utils/auth");
 
 const router = express.Router();
 
@@ -46,9 +47,7 @@ const uploadSingleImage = upload.single("image");
 
 // Upload image route
 router.post("/upload", async (req, res) => {
-  let isAuthenticated = req.session.isAuthenticated;
-
-  if (!isAuthenticated) {
+  if (!isAuthenticated(req)) {
     return res.status(401).send({
       session: req.session,
     });
@@ -105,6 +104,8 @@ router.post("/upload", async (req, res) => {
       var url = "https://nostrimg.com/";
       var imageUrl = "https://i.nostrimg.com/";
 
+      req.session.totalUploads++;
+
       return res.send({
         route: `/i/${fileName}`,
         url: `${url}i/${fileName}`,
@@ -123,6 +124,12 @@ router.post("/upload", async (req, res) => {
 });
 
 router.get("/upload/tinify", async (req, res) => {
+  if (!isAuthenticated(req)) {
+    return res.status(401).send({
+      session: req.session,
+    });
+  }
+
   const fileName = crypto.randomBytes(16).toString("base64").replace(/\//, "_");
   const response = await axios.get(req.query.imageUrl, {
     responseType: "stream",
@@ -175,6 +182,8 @@ router.get("/upload/tinify", async (req, res) => {
           // Return the file data to the client
           var url = "https://nostrimg.com/";
           var imageUrl = "https://i.nostrimg.com/";
+
+          req.session.totalUploads++;
 
           return res.send({
             route: `/i/${fileName}`,
