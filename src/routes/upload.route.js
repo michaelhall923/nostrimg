@@ -47,7 +47,7 @@ const upload = multer({
 const uploadSingleImage = upload.single("image");
 
 // Upload image route
-router.post("/upload", cors(), async (req, res) => {
+router.post("/upload", async (req, res) => {
   // if (!isAuthenticated(req)) {
   //   return res.status(401).send({
   //     data: {},
