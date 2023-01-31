@@ -47,79 +47,166 @@ const uploadSingleImage = upload.single("image");
 
 // Upload image route
 router.post("/upload", async (req, res) => {
-  if (!isAuthenticated(req)) {
-    return res.status(401).send({
-      session: req.session,
-    });
-  }
+  // if (!isAuthenticated(req)) {
+  //   return res.status(401).send({
+  //     data: {},
+  //     message: "Not authenticated",
+  //     success: false,
+  //     status: 401,
+  //   });
+  // }
 
   await uploadSingleImage(req, res, async function (err) {
     if (err) {
       if (err.code == "LIMIT_FILE_SIZE")
         err.message = `The file you are trying to upload is too large. Please choose a file with a size less than ${MAX_FILE_SIZE}MB and try again.`;
-      return res.status(400).send({ message: err.message });
+      return res.status(400).send({
+        data: {},
+        message: err.message,
+        success: false,
+        status: 400,
+      });
     }
 
-    // Compress the image using Sharp
-    if (req.file.mimetype == "image/jpeg" || req.file.mimetype == "image/jpg") {
-      req.file.buffer = await sharp(req.file.buffer)
-        .rotate()
-        .jpeg({ mozjpeg: true })
-        .toBuffer();
-    } else if (req.file.mimetype == "image/png") {
-      req.file.buffer = await sharp(req.file.buffer)
-        .rotate()
-        .png({ quality: 10 })
-        .toBuffer();
-    } else if (req.file.mimetype == "image/webp") {
-      req.file.buffer = await sharp(req.file.buffer, { animated: true })
-        .rotate()
-        .webp({ quality: 80 })
-        .toBuffer();
-    } else if (req.file.mimetype == "image/gif") {
-      req.file.buffer = await sharp(req.file.buffer, { animated: true })
-        .rotate()
-        .gif({ quality: 80 })
-        .toBuffer();
-    }
+    // Set urls
+    var url = "https://nostrimg.com/";
+    var imageUrl = "https://i.nostrimg.com/";
 
-    // Send to S3
-    try {
-      // Generate a random 8 character 64-bit string for the filename
-      const fileID = randomFileID();
-      const fileName =
-        fileID + path.extname(req.file.originalname).toLowerCase();
+    // Generate hash of uploaded file
+    var hash = crypto.createHash("sha256");
+    hash.update(req.file.buffer);
+    var fileHash = hash.digest("hex");
+    var fileID = "file";
+    var fileName = `${fileHash}/${fileID}${path
+      .extname(req.file.originalname)
+      .toLowerCase()}`;
 
-      // Upload the file to the S3 bucket
-      const s3Response = await s3
-        .putObject({
+    var params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: fileName,
+    };
+
+    // Check if file exists before uploading
+    s3.headObject(params, async function (err, metadata) {
+      if (err && err.code === "NotFound") {
+        // Compress the image using Sharp
+        if (
+          req.file.mimetype == "image/jpeg" ||
+          req.file.mimetype == "image/jpg"
+        ) {
+          req.file.buffer = await sharp(req.file.buffer)
+            .rotate()
+            .jpeg({ mozjpeg: true })
+            .toBuffer();
+        } else if (req.file.mimetype == "image/png") {
+          req.file.buffer = await sharp(req.file.buffer)
+            .rotate()
+            .png({ quality: 10 })
+            .toBuffer();
+        } else if (req.file.mimetype == "image/webp") {
+          req.file.buffer = await sharp(req.file.buffer, { animated: true })
+            .rotate()
+            .webp({ quality: 80 })
+            .toBuffer();
+        } else if (req.file.mimetype == "image/gif") {
+          req.file.buffer = await sharp(req.file.buffer, { animated: true })
+            .rotate()
+            .gif({ quality: 80 })
+            .toBuffer();
+        }
+
+        // Generate hash of compressed file
+        hash = crypto.createHash("sha256");
+        hash.update(req.file.buffer);
+        fileHash = hash.digest("hex");
+        fileName = `${fileHash}/${fileID}${path
+          .extname(req.file.originalname)
+          .toLowerCase()}`;
+
+        params = {
           Bucket: process.env.AWS_S3_BUCKET,
           Key: fileName,
-          Body: req.file.buffer,
-          ContentType: req.file.mimetype,
-        })
-        .promise();
+        };
 
-      // Return the file data to the client
-      var url = "https://nostrimg.com/";
-      var imageUrl = "https://i.nostrimg.com/";
+        // Check if compressed file already exists
+        s3.headObject(params, async function (err, metadata) {
+          if (err && err.code === "NotFound") {
+            // Send to S3
+            try {
+              // Upload the file to the S3 bucket
+              const s3Response = await s3
+                .putObject({
+                  Bucket: process.env.AWS_S3_BUCKET,
+                  Key: fileName,
+                  Body: req.file.buffer,
+                  ContentType: req.file.mimetype,
+                })
+                .promise();
 
-      req.session.totalUploads++;
+              req.session.totalUploads++;
 
-      return res.send({
-        route: `/i/${fileName}`,
-        url: `${url}i/${fileName}`,
-        imageUrl: `${imageUrl}${fileName}`,
-        fileName: fileName,
-        fileID: fileID,
-        message: "Image uploaded successfully.",
-        lightningDestination: process.env.BTC_PAY_SERVER_LNURL,
-        lightningPaymentLink: `lightning:${process.env.BTC_PAY_SERVER_LNURL}`,
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).send({ message: err.message });
-    }
+              return res.status(200).send({
+                data: {
+                  link: `${imageUrl}${fileName}`,
+                },
+                route: `/i/${fileName}`,
+                url: `${url}i/${fileName}`,
+                imageUrl: `${imageUrl}${fileName}`,
+                fileName: fileName,
+                fileID: fileID,
+                message: "Image uploaded successfully.",
+                lightningDestination: process.env.BTC_PAY_SERVER_LNURL,
+                lightningPaymentLink: `lightning:${process.env.BTC_PAY_SERVER_LNURL}`,
+                success: true,
+                status: 200,
+              });
+            } catch (err) {
+              console.error(err);
+              return res.status(500).send({
+                data: {},
+                message: err.message,
+                success: false,
+                status: 500,
+              });
+            }
+          } else {
+            // Return file if it already exists
+            return res.status(200).send({
+              data: {
+                link: `${imageUrl}${fileName}`,
+              },
+              route: `/i/${fileName}`,
+              url: `${url}i/${fileName}`,
+              imageUrl: `${imageUrl}${fileName}`,
+              fileName: fileName,
+              fileID: fileID,
+              message: "Image uploaded successfully.",
+              lightningDestination: process.env.BTC_PAY_SERVER_LNURL,
+              lightningPaymentLink: `lightning:${process.env.BTC_PAY_SERVER_LNURL}`,
+              success: true,
+              status: 200,
+            });
+          }
+        });
+      } else {
+        // Return file if it already exists
+        return res.status(200).send({
+          data: {
+            link: `${imageUrl}${fileName}`,
+          },
+          route: `/i/${fileName}`,
+          url: `${url}i/${fileName}`,
+          imageUrl: `${imageUrl}${fileName}`,
+          fileName: fileName,
+          fileID: fileID,
+          message: "Image uploaded successfully.",
+          lightningDestination: process.env.BTC_PAY_SERVER_LNURL,
+          lightningPaymentLink: `lightning:${process.env.BTC_PAY_SERVER_LNURL}`,
+          success: true,
+          status: 200,
+        });
+      }
+    });
   });
 });
 
