@@ -7,7 +7,6 @@ const AWS = require("aws-sdk");
 const sharp = require("sharp");
 const ffmpeg = require("fluent-ffmpeg");
 const fs = require("fs");
-const cors = require("cors");
 const { randomFileID } = require("../utils/file");
 const { isAuthenticated } = require("../utils/auth");
 
